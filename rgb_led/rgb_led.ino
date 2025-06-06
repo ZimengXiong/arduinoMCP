@@ -10,19 +10,23 @@ void setup() {
   pixels.begin();
   pinMode(Power, OUTPUT);
   digitalWrite(Power, HIGH);
-  Serial.begin(9600); // Initialize serial communication at 57600 baud rate
+  Serial.begin(9600); // Initialize serial communication at 9600 baud rate
 }
 
 void loop() { 
   if (Serial.available()) {
     String input = Serial.readStringUntil('\n'); // Read until newline
-    if (input.length() == 9) { // Ensure the input has 9 digits
+    input.trim(); // Remove any whitespace or newline chars
+
+    if (input.length() == 9 && input.toInt() != 0) {
       int red = input.substring(0, 3).toInt();
       int green = input.substring(3, 6).toInt();
       int blue = input.substring(6, 9).toInt();
       setColor(red, green, blue);
-    } else if (input.length() == 1) {
+    } else if (input.length() == 1 && input == "C") {
       getColor();
+    } else if (input.startsWith("P")) {
+      parseSetPinCommand(input);
     } else {
       Serial.println("Invalid command");
     }
@@ -45,4 +49,37 @@ void getColor() {
   Serial.print(green);
   Serial.print(", Blue: ");
   Serial.println(blue);
+}
+
+// Dormant function (now used)
+void setPin(int gpio, bool state) {
+  pinMode(gpio, OUTPUT);
+  digitalWrite(gpio, state ? HIGH : LOW);
+}
+
+// Parses a command like "P13H" or "P8L"
+void parseSetPinCommand(String cmd) {
+  if (cmd.length() < 3) {
+    Serial.println("Invalid SetPin format");
+    return;
+  }
+
+  int pin = cmd.substring(1, cmd.length() - 1).toInt();
+  char stateChar = cmd.charAt(cmd.length() - 1);
+  bool state;
+
+  if (stateChar == 'H' || stateChar == 'h') {
+    state = true;
+  } else if (stateChar == 'L' || stateChar == 'l') {
+    state = false;
+  } else {
+    Serial.println("Invalid pin state");
+    return;
+  }
+
+  setPin(pin, state);
+  Serial.print("Set pin ");
+  Serial.print(pin);
+  Serial.print(" to ");
+  Serial.println(state ? "HIGH" : "LOW");
 }
