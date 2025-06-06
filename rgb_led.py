@@ -39,3 +39,19 @@ def get_current_color() -> str:
         color = ser.readline().decode().strip()
 
     return f"Current RGB color is {color}"
+
+@mcp.tool()
+def set_gpio_pin(pin: int, state: str) -> str:
+    """Set a GPIO pin to HIGH or LOW."""
+    state = state.upper()
+    if state not in ["H", "L"]:
+        return "Error: State must be 'H' or 'L'."
+    if not (0 <= pin <= 53):  # Valid for Uno/Mega
+        return "Error: Invalid GPIO pin number."
+
+    command = f"P{pin}{state}\n"
+
+    with serial_lock:
+        ser.write(command.encode())
+
+    return f"Set pin {pin} to {'HIGH' if state == 'H' else 'LOW'}"
